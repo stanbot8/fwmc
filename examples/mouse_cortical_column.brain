@@ -1,0 +1,150 @@
+# Mouse barrel cortex cortical column
+#
+# Based on Lefort et al (2009) Neuron 61:301 layer-specific connectivity
+# in mouse barrel cortex, combined with Hooks et al (2011) J Neurosci
+# for L2/3->L5 projection strength.
+#
+# This is the most common target for two-photon optogenetics experiments
+# (Packer et al 2015, Marshel et al 2019, Dalgleish et al 2020).
+#
+# Neuron counts: ~2400 cortical neurons (proportional to ~300um column).
+# Lefort barrel column ~10k neurons total; scaled to tractable size.
+#
+# Cell types from Markram et al (2015) Cell 163:456 (rat S1, applies to
+# mouse with minor differences) and Tasic et al (2018) Nature 563:72
+# (Allen Institute mouse cortex cell types).
+
+name = mouse_barrel_cortex
+species = mouse
+seed = 42
+weight_mean = 0.8
+weight_std = 0.3
+background_mean = 6.0
+background_std = 2.5
+
+# ---- Layer 2/3: corticocortical output, optogenetics target ----
+# Lefort et al: L2/3 has highest connection probability to L5.
+# Most commonly targeted by Cre-dependent opsin expression
+# (CamKII-Cre for excitatory, PV-Cre for inhibitory).
+region.0.name = L23
+region.0.n_neurons = 800
+region.0.density = 0.04
+region.0.types = L23_Pyramidal:0.80 PV_Basket:0.10 SST_Martinotti:0.06 VIP_Interneuron:0.04
+region.0.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Layer 4: thalamocortical input (barrel hollow) ----
+# Petersen & Crochet (2013): spiny stellate cells in L4 barrels
+# receive topographic VPM input. Strongest TC synapse in cortex.
+region.1.name = L4
+region.1.n_neurons = 600
+region.1.density = 0.06
+region.1.types = L4_Stellate:0.78 PV_Basket:0.12 SST_Martinotti:0.06 VIP_Interneuron:0.04
+region.1.nt_dist = Glut:0.78 GABA:0.22
+
+# ---- Layer 5: subcortical output ----
+# Hooks et al (2011): L5 thick-tufted pyramidals receive strong
+# L2/3 input and project to brainstem, thalamus, spinal cord.
+# Two sublayers: L5a (thin-tufted, IT) and L5b (thick-tufted, PT).
+region.2.name = L5
+region.2.n_neurons = 500
+region.2.density = 0.04
+region.2.types = L5_Pyramidal:0.78 PV_Basket:0.10 SST_Martinotti:0.07 VIP_Interneuron:0.05
+region.2.nt_dist = Glut:0.78 GABA:0.22
+
+# ---- Layer 6: corticothalamic feedback ----
+# Thomson (2010): L6 corticothalamic cells modulate VPM responses.
+# Lower firing rates than other layers in vivo.
+region.3.name = L6
+region.3.n_neurons = 400
+region.3.density = 0.03
+region.3.types = L6_Pyramidal:0.80 PV_Basket:0.08 SST_Martinotti:0.07 VIP_Interneuron:0.05
+region.3.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- VPM thalamus: ventral posteromedial nucleus ----
+# Yu et al (2006): single-whisker representation in VPM barreloid.
+# Relay cells fire at ~5-15 Hz spontaneously, burst on whisker deflection.
+region.4.name = VPM
+region.4.n_neurons = 80
+region.4.density = 0.15
+region.4.types = TC:1.0
+region.4.nt_dist = Glut:1.0
+
+# ======== Inter-region projections ========
+# Lefort et al (2009) Table 1 connection probabilities
+
+# VPM -> L4 (strongest TC pathway)
+projection.0.from = VPM
+projection.0.to = L4
+projection.0.density = 0.10
+projection.0.nt = Glut
+projection.0.weight_mean = 2.5
+projection.0.weight_std = 0.5
+
+# VPM -> L5 (direct thalamocortical to output layer)
+projection.1.from = VPM
+projection.1.to = L5
+projection.1.density = 0.02
+projection.1.nt = Glut
+projection.1.weight_mean = 1.0
+projection.1.weight_std = 0.3
+
+# L4 -> L23 (main ascending pathway, Lefort: P=0.12)
+projection.2.from = L4
+projection.2.to = L23
+projection.2.density = 0.05
+projection.2.nt = Glut
+projection.2.weight_mean = 1.5
+projection.2.weight_std = 0.4
+
+# L23 -> L5 (Hooks et al: strong, P=0.09)
+projection.3.from = L23
+projection.3.to = L5
+projection.3.density = 0.04
+projection.3.nt = Glut
+projection.3.weight_mean = 1.3
+projection.3.weight_std = 0.3
+
+# L23 -> L6 (weak descending)
+projection.4.from = L23
+projection.4.to = L6
+projection.4.density = 0.01
+projection.4.nt = Glut
+
+# L5 -> L6 (descending within column)
+projection.5.from = L5
+projection.5.to = L6
+projection.5.density = 0.02
+projection.5.nt = Glut
+
+# L6 -> VPM (corticothalamic feedback)
+projection.6.from = L6
+projection.6.to = VPM
+projection.6.density = 0.06
+projection.6.nt = Glut
+projection.6.weight_mean = 0.8
+projection.6.weight_std = 0.2
+
+# L6 -> L4 (intracortical modulatory feedback)
+projection.7.from = L6
+projection.7.to = L4
+projection.7.density = 0.01
+projection.7.nt = Glut
+projection.7.weight_mean = 0.5
+projection.7.weight_std = 0.2
+
+# ======== Stimulus protocol ========
+# Whisker deflection simulated as VPM burst
+stimulus.0.label = whisker_deflection
+stimulus.0.region = VPM
+stimulus.0.start = 500
+stimulus.0.end = 600
+stimulus.0.intensity = 15.0
+stimulus.0.fraction = 0.9
+
+# Spontaneous thalamic activity
+stimulus.1.label = spontaneous_thalamic
+stimulus.1.region = VPM
+stimulus.1.start = 0
+stimulus.1.end = 2000
+stimulus.1.intensity = 3.0
+stimulus.1.fraction = 0.2

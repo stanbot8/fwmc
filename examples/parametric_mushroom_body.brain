@@ -1,0 +1,103 @@
+# Parametric Mushroom Body Model
+# Generates a synthetic Drosophila mushroom body circuit for testing hypotheses
+# about learning, memory, and reward processing.
+#
+# Usage:
+#   fwmc --parametric examples/parametric_mushroom_body.brain --duration 5000
+#
+# Architecture:
+#   Antennal Lobe (500 neurons) → Mushroom Body (2000 KCs + MBONs + DANs)
+#   with dopaminergic feedback loops for reward learning.
+
+name = mushroom_body_model
+species = drosophila
+seed = 42
+weight_mean = 1.0
+weight_std = 0.3
+
+# --- Antennal Lobe ---
+# Projection neurons (excitatory) and local interneurons (inhibitory)
+# Dense internal connectivity for lateral inhibition
+region.0.name = antennal_lobe
+region.0.n_neurons = 500
+region.0.density = 0.12
+region.0.nt = ACh
+region.0.types = PN:0.4 LN:0.6
+region.0.nt_dist = ACh:0.4 GABA:0.6
+
+# --- Mushroom Body ---
+# Kenyon cells (sparse coding), MBONs (readout), DANs (reward)
+# Sparse internal connectivity (KCs have few connections to each other)
+region.1.name = mushroom_body
+region.1.n_neurons = 2000
+region.1.density = 0.02
+region.1.nt = ACh
+region.1.types = KC:0.85 MBON_cholinergic:0.08 DAN_PAM:0.04 DAN_PPL1:0.03
+region.1.nt_dist = ACh:0.7 GABA:0.15 DA:0.15
+
+# --- Lateral Horn ---
+# Innate odor responses, direct from AL
+region.2.name = lateral_horn
+region.2.n_neurons = 300
+region.2.density = 0.08
+region.2.nt = ACh
+region.2.types = PN:0.5 LN:0.3 FastSpiking:0.2
+region.2.nt_dist = ACh:0.6 GABA:0.4
+
+# --- Projections ---
+# AL → MB: sparse divergent projection (each PN contacts ~10% of KCs)
+projection.0.from = antennal_lobe
+projection.0.to = mushroom_body
+projection.0.density = 0.01
+projection.0.nt = ACh
+projection.0.weight_mean = 1.5
+projection.0.weight_std = 0.4
+
+# AL → LH: denser direct pathway
+projection.1.from = antennal_lobe
+projection.1.to = lateral_horn
+projection.1.density = 0.05
+projection.1.nt = ACh
+projection.1.weight_mean = 1.2
+projection.1.weight_std = 0.3
+
+# MB → LH: MBON output to lateral horn
+projection.2.from = mushroom_body
+projection.2.to = lateral_horn
+projection.2.density = 0.005
+projection.2.nt = ACh
+projection.2.weight_mean = 1.0
+projection.2.weight_std = 0.2
+
+# LH → MB: feedback (mostly inhibitory)
+projection.3.from = lateral_horn
+projection.3.to = mushroom_body
+projection.3.density = 0.003
+projection.3.nt = GABA
+projection.3.weight_mean = 0.8
+projection.3.weight_std = 0.2
+
+# --- Stimuli ---
+# Odor presentation to antennal lobe (simulates ORN activation)
+stimulus.0.label = odor_presentation
+stimulus.0.region = antennal_lobe
+stimulus.0.start = 500
+stimulus.0.end = 1500
+stimulus.0.intensity = 8.0
+stimulus.0.fraction = 0.3
+
+# Dopamine reward signal to mushroom body DANs
+stimulus.1.label = reward_signal
+stimulus.1.region = mushroom_body
+stimulus.1.start = 1000
+stimulus.1.end = 1200
+stimulus.1.intensity = 5.0
+stimulus.1.fraction = 0.07
+
+# Second odor (unrewarded)
+stimulus.2.label = odor_B_unrewarded
+stimulus.2.region = antennal_lobe
+stimulus.2.start = 2500
+stimulus.2.end = 3500
+stimulus.2.intensity = 8.0
+stimulus.2.fraction = 0.25

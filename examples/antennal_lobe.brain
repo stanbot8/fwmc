@@ -1,0 +1,96 @@
+# Antennal Lobe Odor Processing Circuit
+# Models the first olfactory processing center in Drosophila.
+# Tests odor encoding, lateral inhibition, and gain control.
+#
+# Usage:
+#   fwmc --parametric examples/antennal_lobe.brain --duration 2000
+#
+# Architecture:
+#   ORNs (input) → Glomeruli (50 channels) with lateral inhibition via LNs
+#   → PNs (output to mushroom body and lateral horn)
+#   Two odor stimuli test discrimination and mixture processing.
+
+name = antennal_lobe_model
+species = drosophila
+seed = 99
+weight_mean = 1.0
+weight_std = 0.3
+
+# --- Olfactory Receptor Neurons ---
+# ~1300 ORNs across 50 receptor types, convergent onto glomeruli.
+# Each receptor type has ~26 ORNs. Sparse internal connectivity.
+region.0.name = orn_array
+region.0.n_neurons = 1300
+region.0.density = 0.005
+region.0.nt = ACh
+region.0.types = ORN:1.0
+
+# --- Glomerular Layer ---
+# 50 glomeruli with PNs and LNs. Dense local connectivity
+# implements lateral inhibition and gain control.
+region.1.name = glomeruli
+region.1.n_neurons = 600
+region.1.density = 0.15
+region.1.nt = ACh
+region.1.types = PN:0.35 eLN:0.25 iLN:0.40
+region.1.nt_dist = ACh:0.45 GABA:0.55
+
+# --- Projection Neurons Output ---
+# PNs that send processed odor info to higher centers.
+# Included as a separate readout region for metrics.
+region.2.name = pn_output
+region.2.n_neurons = 200
+region.2.density = 0.03
+region.2.nt = ACh
+region.2.types = PN:0.8 LN:0.2
+region.2.nt_dist = ACh:0.85 GABA:0.15
+
+# --- Projections ---
+# ORN → Glomeruli: convergent excitatory input
+projection.0.from = orn_array
+projection.0.to = glomeruli
+projection.0.density = 0.008
+projection.0.nt = ACh
+projection.0.weight_mean = 2.0
+projection.0.weight_std = 0.5
+
+# Glomeruli → PN output: processed signal relay
+projection.1.from = glomeruli
+projection.1.to = pn_output
+projection.1.density = 0.04
+projection.1.nt = ACh
+projection.1.weight_mean = 1.5
+projection.1.weight_std = 0.3
+
+# PN output → Glomeruli: feedback inhibition
+projection.2.from = pn_output
+projection.2.to = glomeruli
+projection.2.density = 0.01
+projection.2.nt = GABA
+projection.2.weight_mean = 0.8
+projection.2.weight_std = 0.2
+
+# --- Stimuli ---
+# Odor A: activates a subset of ORNs (e.g., vinegar)
+stimulus.0.label = odor_A_vinegar
+stimulus.0.region = orn_array
+stimulus.0.start = 200
+stimulus.0.end = 700
+stimulus.0.intensity = 8.0
+stimulus.0.fraction = 0.20
+
+# Odor B: different subset (e.g., banana)
+stimulus.1.label = odor_B_banana
+stimulus.1.region = orn_array
+stimulus.1.start = 1000
+stimulus.1.end = 1500
+stimulus.1.intensity = 6.0
+stimulus.1.fraction = 0.15
+
+# Mixture: both odors overlap
+stimulus.2.label = mixture_AB
+stimulus.2.region = orn_array
+stimulus.2.start = 1700
+stimulus.2.end = 1900
+stimulus.2.intensity = 5.0
+stimulus.2.fraction = 0.30

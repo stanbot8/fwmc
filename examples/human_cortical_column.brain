@@ -1,0 +1,207 @@
+# Human cortical column model
+#
+# Canonical cortical microcircuit with thalamocortical loop.
+# Neuron counts preserve biological layer proportions from
+# Markram et al (2015) Cell 163:456 (rat somatosensory cortex),
+# scaled to ~10k cortical neurons for tractable simulation.
+#
+# Interneuron subtypes follow Tremblay et al (2016) Neuron 91:505:
+#   PV: ~40% of interneurons (perisomatic inhibition)
+#   SST: ~30% of interneurons (dendritic inhibition)
+#   VIP: ~15% of interneurons (disinhibition of SST)
+#   Other: ~15% (not modeled separately)
+#
+# Excitatory:inhibitory ratio = 80:20 (Sahara et al 2012).
+#
+# Connectivity: Douglas & Martin (2004) Annu Rev Neurosci 27:419
+# canonical microcircuit: thalamus -> L4 -> L2/3 -> L5 -> L6 -> thalamus.
+
+name = human_cortical_column
+species = human
+seed = 42
+weight_mean = 0.8
+weight_std = 0.3
+background_mean = 8.0
+background_std = 3.0
+
+# ---- Layer 2/3: largest cortical layer in humans ----
+# Testa-Silva et al (2014): human L2/3 pyramidal cells have faster
+# APs and higher bandwidth than rodent. Main source of corticocortical output.
+region.0.name = L23
+region.0.n_neurons = 3200
+region.0.density = 0.04
+region.0.types = L23_Pyramidal:0.80 PV_Basket:0.08 SST_Martinotti:0.06 VIP_Interneuron:0.06
+region.0.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Layer 4: thalamocortical input layer ----
+# Bruno & Sakmann (2006): spiny stellate cells receive direct TC input.
+# Highest interneuron density (especially PV) for rapid feedforward inhibition.
+region.1.name = L4
+region.1.n_neurons = 2500
+region.1.density = 0.05
+region.1.types = L4_Stellate:0.78 PV_Basket:0.10 SST_Martinotti:0.06 VIP_Interneuron:0.06
+region.1.nt_dist = Glut:0.78 GABA:0.22
+
+# ---- Layer 5: primary cortical output layer ----
+# Beaulieu-Laroche et al (2018): human L5 pyramidal cells are larger,
+# with more complex dendritic trees than rodent. Intrinsic bursting.
+# Projects to subcortical targets (basal ganglia, brainstem, spinal cord).
+region.2.name = L5
+region.2.n_neurons = 2200
+region.2.density = 0.04
+region.2.types = L5_Pyramidal:0.80 PV_Basket:0.08 SST_Martinotti:0.07 VIP_Interneuron:0.05
+region.2.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Layer 6: corticothalamic feedback ----
+# Thomson (2010): L6 provides modulatory feedback to thalamus.
+# Sparse firing, lower overall activity than other layers.
+region.3.name = L6
+region.3.n_neurons = 2100
+region.3.density = 0.03
+region.3.types = L6_Pyramidal:0.80 PV_Basket:0.08 SST_Martinotti:0.07 VIP_Interneuron:0.05
+region.3.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Thalamus: relay nucleus ----
+# Sherman (2001): tonic mode during wakefulness, ~10-20 Hz.
+# Receives L6 feedback, projects to L4 (and weakly to other layers).
+region.4.name = thalamus
+region.4.n_neurons = 400
+region.4.density = 0.10
+region.4.types = TC:1.0
+region.4.nt_dist = Glut:1.0
+
+# ---- TRN: thalamic reticular nucleus ----
+# Pinault (2004): GABAergic shell around thalamus, gates relay.
+# All TRN neurons inhibit thalamocortical relay cells.
+region.5.name = TRN
+region.5.n_neurons = 100
+region.5.density = 0.15
+region.5.types = TRN:1.0
+region.5.nt_dist = GABA:1.0
+
+# ---- NBM: nucleus basalis of Meynert ----
+# Zaborszky et al (2015): cholinergic projection to cortex.
+# Modulates attention and cortical excitability. Slow tonic firing.
+region.6.name = NBM
+region.6.n_neurons = 50
+region.6.density = 0.10
+region.6.types = NBM:1.0
+region.6.nt_dist = ACh:1.0
+
+# ======== Inter-region projections ========
+# Canonical cortical microcircuit (Douglas & Martin 2004)
+
+# Thalamus -> L4 (primary feedforward, strongest input)
+projection.0.from = thalamus
+projection.0.to = L4
+projection.0.density = 0.08
+projection.0.nt = Glut
+projection.0.weight_mean = 2.0
+projection.0.weight_std = 0.5
+
+# Thalamus -> L6 (weak collateral to L6)
+projection.1.from = thalamus
+projection.1.to = L6
+projection.1.density = 0.02
+projection.1.nt = Glut
+
+# L4 -> L2/3 (feedforward excitation, main ascending pathway)
+projection.2.from = L4
+projection.2.to = L23
+projection.2.density = 0.03
+projection.2.nt = Glut
+projection.2.weight_mean = 1.5
+projection.2.weight_std = 0.4
+
+# L2/3 -> L5 (feedforward to output layer)
+projection.3.from = L23
+projection.3.to = L5
+projection.3.density = 0.03
+projection.3.nt = Glut
+projection.3.weight_mean = 1.2
+projection.3.weight_std = 0.3
+
+# L2/3 -> L6 (weak descending projection)
+projection.4.from = L23
+projection.4.to = L6
+projection.4.density = 0.01
+projection.4.nt = Glut
+
+# L5 -> L6 (descending within column)
+projection.5.from = L5
+projection.5.to = L6
+projection.5.density = 0.02
+projection.5.nt = Glut
+
+# L6 -> thalamus (corticothalamic feedback, modulatory)
+projection.6.from = L6
+projection.6.to = thalamus
+projection.6.density = 0.05
+projection.6.nt = Glut
+projection.6.weight_mean = 0.8
+projection.6.weight_std = 0.2
+
+# L6 -> L4 (intracortical feedback via local circuit)
+projection.7.from = L6
+projection.7.to = L4
+projection.7.density = 0.01
+projection.7.nt = Glut
+projection.7.weight_mean = 0.5
+projection.7.weight_std = 0.2
+
+# Thalamus -> TRN (excitatory collateral)
+projection.8.from = thalamus
+projection.8.to = TRN
+projection.8.density = 0.12
+projection.8.nt = Glut
+projection.8.weight_mean = 1.5
+projection.8.weight_std = 0.3
+
+# TRN -> thalamus (inhibitory gating)
+projection.9.from = TRN
+projection.9.to = thalamus
+projection.9.density = 0.12
+projection.9.nt = GABA
+projection.9.weight_mean = 2.0
+projection.9.weight_std = 0.5
+
+# NBM -> L23 (cholinergic modulation, diffuse)
+projection.10.from = NBM
+projection.10.to = L23
+projection.10.density = 0.02
+projection.10.nt = ACh
+projection.10.weight_mean = 0.5
+projection.10.weight_std = 0.2
+
+# NBM -> L5 (cholinergic modulation)
+projection.11.from = NBM
+projection.11.to = L5
+projection.11.density = 0.02
+projection.11.nt = ACh
+projection.11.weight_mean = 0.5
+projection.11.weight_std = 0.2
+
+# ======== Stimulus protocol ========
+# Thalamic input burst simulating sensory stimulus
+stimulus.0.label = thalamic_drive
+stimulus.0.region = thalamus
+stimulus.0.start = 500
+stimulus.0.end = 1500
+stimulus.0.intensity = 10.0
+stimulus.0.fraction = 0.8
+
+# Sustained background thalamic input
+stimulus.1.label = thalamic_spontaneous
+stimulus.1.region = thalamus
+stimulus.1.start = 0
+stimulus.1.end = 3000
+stimulus.1.intensity = 3.0
+stimulus.1.fraction = 0.3
+
+# Attention signal via NBM cholinergic burst
+stimulus.2.label = attention_signal
+stimulus.2.region = NBM
+stimulus.2.start = 400
+stimulus.2.end = 1600
+stimulus.2.intensity = 5.0
+stimulus.2.fraction = 0.8

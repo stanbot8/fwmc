@@ -1,0 +1,130 @@
+# Central Complex Navigation Circuit
+# Models the Drosophila central complex, which integrates sensory cues
+# for heading direction, spatial orientation, and locomotor decisions.
+#
+# Usage:
+#   fwmc --parametric examples/central_complex.brain --duration 5000 --stdp
+#
+# Architecture:
+#   Protocerebral Bridge (PB) ↔ Ellipsoid Body (EB) ↔ Fan-shaped Body (FB)
+#   with compass-like heading representation in PB/EB and layered
+#   motor planning in FB. Noduli provide self-motion integration.
+
+name = central_complex_model
+species = drosophila
+seed = 137
+weight_mean = 1.0
+weight_std = 0.25
+
+# --- Protocerebral Bridge ---
+# 18 glomeruli with columnar neurons encoding heading direction.
+# Ring attractor dynamics via lateral inhibition.
+region.0.name = protocerebral_bridge
+region.0.n_neurons = 360
+region.0.density = 0.06
+region.0.nt = ACh
+region.0.types = EPG:0.45 PEN:0.3 PEG:0.25
+region.0.nt_dist = ACh:0.55 GABA:0.3 Glu:0.15
+
+# --- Ellipsoid Body ---
+# Ring neurons that form the compass representation.
+# Strong lateral inhibition maintains a single activity bump.
+region.1.name = ellipsoid_body
+region.1.n_neurons = 400
+region.1.density = 0.10
+region.1.nt = GABA
+region.1.types = R_ring:0.6 EPG:0.2 ExR:0.2
+region.1.nt_dist = GABA:0.65 ACh:0.25 Glu:0.10
+
+# --- Fan-shaped Body ---
+# Layered columnar structure for visual feature integration
+# and locomotor control. Receives from PB, EB, and visual areas.
+region.2.name = fan_shaped_body
+region.2.n_neurons = 800
+region.2.density = 0.04
+region.2.nt = ACh
+region.2.types = FC:0.5 PFN:0.2 hDelta:0.15 vDelta:0.15
+region.2.nt_dist = ACh:0.45 GABA:0.35 Glu:0.20
+
+# --- Noduli ---
+# Self-motion (optic flow) integration for path integration.
+region.3.name = noduli
+region.3.n_neurons = 160
+region.3.density = 0.08
+region.3.nt = ACh
+region.3.types = PFN:0.5 FC:0.3 LN:0.2
+region.3.nt_dist = ACh:0.6 GABA:0.3 Glu:0.10
+
+# --- Projections ---
+# PB → EB: columnar heading signal
+projection.0.from = protocerebral_bridge
+projection.0.to = ellipsoid_body
+projection.0.density = 0.03
+projection.0.nt = ACh
+projection.0.weight_mean = 1.8
+projection.0.weight_std = 0.3
+
+# EB → PB: recurrent feedback (ring attractor)
+projection.1.from = ellipsoid_body
+projection.1.to = protocerebral_bridge
+projection.1.density = 0.025
+projection.1.nt = GABA
+projection.1.weight_mean = 1.2
+projection.1.weight_std = 0.3
+
+# PB → FB: heading-to-motor transformation
+projection.2.from = protocerebral_bridge
+projection.2.to = fan_shaped_body
+projection.2.density = 0.015
+projection.2.nt = ACh
+projection.2.weight_mean = 1.4
+projection.2.weight_std = 0.3
+
+# EB → FB: ring-to-column mapping
+projection.3.from = ellipsoid_body
+projection.3.to = fan_shaped_body
+projection.3.density = 0.012
+projection.3.nt = ACh
+projection.3.weight_mean = 1.1
+projection.3.weight_std = 0.25
+
+# FB → PB: motor efference copy
+projection.4.from = fan_shaped_body
+projection.4.to = protocerebral_bridge
+projection.4.density = 0.008
+projection.4.nt = ACh
+projection.4.weight_mean = 0.8
+projection.4.weight_std = 0.2
+
+# Noduli → FB: self-motion signals
+projection.5.from = noduli
+projection.5.to = fan_shaped_body
+projection.5.density = 0.02
+projection.5.nt = ACh
+projection.5.weight_mean = 1.3
+projection.5.weight_std = 0.3
+
+# PB → Noduli: heading reference for path integration
+projection.6.from = protocerebral_bridge
+projection.6.to = noduli
+projection.6.density = 0.015
+projection.6.nt = ACh
+projection.6.weight_mean = 1.0
+projection.6.weight_std = 0.2
+
+# --- Stimuli ---
+# Simulate a rotating visual landmark activating compass neurons
+stimulus.0.label = visual_landmark
+stimulus.0.region = protocerebral_bridge
+stimulus.0.start = 500
+stimulus.0.end = 3000
+stimulus.0.intensity = 6.0
+stimulus.0.fraction = 0.15
+
+# Optic flow signal during forward walking
+stimulus.1.label = optic_flow
+stimulus.1.region = noduli
+stimulus.1.start = 1000
+stimulus.1.end = 4000
+stimulus.1.intensity = 4.0
+stimulus.1.fraction = 0.5

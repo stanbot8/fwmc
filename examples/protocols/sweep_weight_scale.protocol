@@ -1,0 +1,38 @@
+# Parameter sweep protocol: weight_scale
+# Sweeps weight_scale from 0.1 to 5.0 in 10 linear steps to find the
+# synaptic weight scaling factor that maximizes spike correlation between
+# the digital twin and biological recordings.
+#
+# Each step runs a short open-loop simulation. Use with ParamSweep engine:
+#   SweepAxis::Linear("weight_scale", 0.1, 5.0, 10)
+#
+# This protocol file defines the base experiment that gets cloned for
+# each sweep point. The sweep engine overrides weight_scale per run.
+
+[protocol]
+name = Weight Scale Parameter Sweep
+description = Linear sweep of weight_scale from 0.1 to 5.0 in 10 steps
+seed = 42
+
+# Sweep configuration (parsed by ParamSweep, not ExperimentProtocol)
+# sweep_param = weight_scale
+# sweep_min = 0.1
+# sweep_max = 5.0
+# sweep_steps = 10
+# sweep_mode = linear
+# sweep_metric = correlation
+
+[phase:sweep_baseline]
+name = Sweep Baseline
+duration_ms = 5000
+bridge_mode = 1
+enable_stdp = false
+weight_scale = 1.0
+
+[phase:sweep_eval]
+name = Sweep Evaluation
+duration_ms = 10000
+bridge_mode = 1
+enable_stdp = false
+weight_scale = 1.0
+transition = correlation_above 0.95

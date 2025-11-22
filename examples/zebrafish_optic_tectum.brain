@@ -1,0 +1,155 @@
+# Zebrafish larval optic tectum
+#
+# The optic tectum is the primary visual processing area in larval
+# zebrafish (Danio rerio), and the most common target for whole-brain
+# optogenetics and calcium imaging experiments.
+#
+# Robles et al (2011) Curr Biol: laminar organization of tectum.
+# Ahrens et al (2013) Nature: whole-brain calcium imaging in
+# head-fixed larval zebrafish at 6-7 dpf.
+# Portugues et al (2014) Neuron: optomotor response circuit.
+#
+# Larval zebrafish (6-7 dpf) brain has ~100k neurons total.
+# Optic tectum accounts for ~30-40% of total brain neurons.
+# Transparent skull allows non-invasive optical access.
+#
+# This spec models the tectal circuit plus key input/output regions
+# for optogenetics experiments (total ~5000 neurons).
+
+name = zebrafish_optic_tectum
+species = zebrafish
+seed = 42
+weight_mean = 0.6
+weight_std = 0.2
+background_mean = 4.0
+background_std = 1.5
+
+# ---- Optic tectum neuropil (main processing region) ----
+# Robles et al (2011): 6 laminae (SO, SFGS, SGC, SAC, SPV, boundary).
+# Periventricular neurons (PVNs) are the most numerous type.
+# ~15000 neurons per hemisphere at 7dpf (Naumann et al 2016).
+# Modeled at reduced scale.
+region.0.name = tectum_pvn
+region.0.n_neurons = 2000
+region.0.density = 0.03
+region.0.types = L23_Pyramidal:0.70 PV_Basket:0.15 SST_Martinotti:0.15
+region.0.nt_dist = Glut:0.70 GABA:0.30
+
+# ---- Tectal superficial interneurons (SINs) ----
+# Del Bene et al (2010) Science: GABAergic SINs provide gain control.
+# Critical for size selectivity and direction selectivity.
+region.1.name = tectum_sin
+region.1.n_neurons = 500
+region.1.density = 0.05
+region.1.types = PV_Basket:0.60 SST_Martinotti:0.40
+region.1.nt_dist = GABA:1.0
+
+# ---- Retinal ganglion cell axons (input) ----
+# Gebhardt et al (2013): ~5500 RGC axons project to contralateral tectum.
+# Retinotopic map with multiple subtypes (ON, OFF, DS).
+# Modeled as excitatory input population.
+region.2.name = retina
+region.2.n_neurons = 800
+region.2.density = 0.02
+region.2.types = L23_Pyramidal:1.0
+region.2.nt_dist = Glut:1.0
+
+# ---- Pretectum (optomotor circuit node) ----
+# Kubo et al (2014): pretectal neurons drive optomotor response.
+# Receives tectal output, projects to hindbrain motor nuclei.
+region.3.name = pretectum
+region.3.n_neurons = 300
+region.3.density = 0.06
+region.3.types = L23_Pyramidal:0.80 PV_Basket:0.20
+region.3.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Hindbrain reticulospinal neurons (motor output) ----
+# Orger et al (2008): reticulospinal neurons drive swim bouts.
+# Mauthner cell and array of graded motor neurons.
+region.4.name = hindbrain
+region.4.n_neurons = 200
+region.4.density = 0.08
+region.4.types = L5_Pyramidal:0.80 PV_Basket:0.20
+region.4.nt_dist = Glut:0.80 GABA:0.20
+
+# ---- Cerebellum (motor adaptation) ----
+# Aizenberg & Schuman (2011): cerebellar granule cells involved
+# in motor learning and adaptation of optomotor response.
+region.5.name = cerebellum
+region.5.n_neurons = 1200
+region.5.density = 0.02
+region.5.types = L4_Stellate:0.90 PV_Basket:0.10
+region.5.nt_dist = Glut:0.90 GABA:0.10
+
+# ======== Projections ========
+
+# Retina -> tectum PVN (retinotectal, topographic)
+projection.0.from = retina
+projection.0.to = tectum_pvn
+projection.0.density = 0.04
+projection.0.nt = Glut
+projection.0.weight_mean = 1.8
+projection.0.weight_std = 0.4
+
+# Retina -> tectum SIN (feedforward inhibition)
+projection.1.from = retina
+projection.1.to = tectum_sin
+projection.1.density = 0.03
+projection.1.nt = Glut
+projection.1.weight_mean = 1.5
+projection.1.weight_std = 0.3
+
+# SIN -> PVN (GABAergic gain control)
+projection.2.from = tectum_sin
+projection.2.to = tectum_pvn
+projection.2.density = 0.04
+projection.2.nt = GABA
+projection.2.weight_mean = 1.8
+projection.2.weight_std = 0.4
+
+# Tectum PVN -> pretectum (tectal output)
+projection.3.from = tectum_pvn
+projection.3.to = pretectum
+projection.3.density = 0.03
+projection.3.nt = Glut
+projection.3.weight_mean = 1.2
+projection.3.weight_std = 0.3
+
+# Pretectum -> hindbrain (motor command)
+projection.4.from = pretectum
+projection.4.to = hindbrain
+projection.4.density = 0.05
+projection.4.nt = Glut
+projection.4.weight_mean = 1.5
+projection.4.weight_std = 0.3
+
+# Tectum PVN -> cerebellum (efference copy)
+projection.5.from = tectum_pvn
+projection.5.to = cerebellum
+projection.5.density = 0.01
+projection.5.nt = Glut
+
+# Cerebellum -> hindbrain (motor adaptation)
+projection.6.from = cerebellum
+projection.6.to = hindbrain
+projection.6.density = 0.02
+projection.6.nt = Glut
+projection.6.weight_mean = 0.8
+projection.6.weight_std = 0.2
+
+# ======== Stimulus protocol ========
+# Visual stimulus (moving grating) encoded as retinal input
+stimulus.0.label = visual_grating
+stimulus.0.region = retina
+stimulus.0.start = 200
+stimulus.0.end = 700
+stimulus.0.intensity = 12.0
+stimulus.0.fraction = 0.6
+
+# Spontaneous retinal activity
+stimulus.1.label = spontaneous_retinal
+stimulus.1.region = retina
+stimulus.1.start = 0
+stimulus.1.end = 2000
+stimulus.1.intensity = 2.0
+stimulus.1.fraction = 0.15

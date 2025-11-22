@@ -1,0 +1,28 @@
+[protocol]
+name = Full Twinning Pipeline
+description = Open-loop baseline -> Shadow validation -> Closed-loop replacement
+seed = 42
+
+[phase:baseline]
+name = Open-Loop Baseline
+duration_ms = 5000
+bridge_mode = 0
+enable_stdp = false
+weight_scale = 1.0
+
+[phase:shadow]
+name = Shadow Monitoring
+duration_ms = 10000
+bridge_mode = 1
+enable_stdp = false
+weight_scale = 1.0
+transition = correlation_above 0.85
+
+[phase:closed_loop]
+name = Closed-Loop Replacement
+duration_ms = 20000
+bridge_mode = 2
+enable_stdp = true
+weight_scale = 1.0
+monitor_threshold = 0.6
+bridge_threshold = 0.8
