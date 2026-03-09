@@ -1,0 +1,19 @@
+build/
+output/
+*.o
+*.so
+*.pyc
+__pycache__/
+bdm.toml
+.claude/
+data/raw/
+*.csv.gz
+data/
+results/
+test_tmp_*
+figures/
+
+# MuJoCo model files (generated/downloaded)
+*.mjb
+nmf_model.xml
+imgui.ini
