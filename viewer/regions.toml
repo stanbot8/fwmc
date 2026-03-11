@@ -1,0 +1,17 @@
+# FWMC Brain Viewer config
+# Set point_size to 0 to hide a region
+
+[regions]
+central_brain       = 1
+optic_lobe_L        = 2
+optic_lobe_R        = 2
+mb_calyx_L          = 4
+mb_calyx_R          = 4
+mb_lobe_L           = 4
+mb_lobe_R           = 4
+antennal_lobe_L     = 4
+antennal_lobe_R     = 4
+central_complex     = 4
+lateral_horn_L      = 4
+lateral_horn_R      = 4
+sez                 = 4
