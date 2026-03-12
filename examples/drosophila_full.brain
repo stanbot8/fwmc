@@ -1,0 +1,246 @@
+# Full Drosophila Brain Model (FlyWire-scale)
+# ~139,255 neurons across 7 major neuropil regions
+# Based on FlyWire connectome (Dorkenwald et al., 2024)
+#
+# Usage:
+#   fwmc --parametric examples/drosophila_full.brain --duration 5000 --stats --stdp
+#
+# Architecture:
+#   Sensory (ORNs/AL) → Associative (MB/LH) → Premotor (CX/VNC)
+#   with neuromodulatory feedback (DANs, serotonergic, octopaminergic)
+#
+# Neuron counts approximate FlyWire cell type census:
+#   AL:    ~2,600    Antennal Lobe (olfactory glomeruli)
+#   MB:   ~21,500    Mushroom Body (Kenyon cells + MBONs + DANs)
+#   LH:    ~1,500    Lateral Horn (innate olfactory)
+#   CX:    ~5,000    Central Complex (navigation, motor planning)
+#   OL:   ~80,000    Optic Lobe (visual processing)
+#   VNC:  ~25,000    Ventral Nerve Cord (motor output)
+#   Other: ~3,655    Subesophageal zone, protocerebrum, misc
+
+name = drosophila_full_brain
+seed = 2024
+weight_mean = 1.0
+weight_std = 0.3
+
+# Background synaptic bombardment (tonic drive + noise)
+# Mean keeps neurons near threshold; std adds realistic variability
+background_mean = 12.0
+background_std = 4.0
+
+# ============================================================
+#  Region 0: Antennal Lobe (AL) — olfactory processing
+# ============================================================
+# ~50 glomeruli, each with ORNs → PNs → LNs
+# Dense lateral inhibition via GABAergic local neurons
+region.0.name = antennal_lobe
+region.0.n_neurons = 2600
+region.0.density = 0.08
+region.0.nt = ACh
+region.0.types = ORN:0.35 PN:0.30 LN:0.35
+region.0.nt_dist = ACh:0.45 GABA:0.50 Glut:0.05
+
+# ============================================================
+#  Region 1: Mushroom Body (MB) — learning and memory
+# ============================================================
+# ~2000 Kenyon cells (sparse coding), ~100 MBONs (readout),
+# ~150 DANs (reward/punishment), rest are interneurons
+# Very sparse internal KC-KC connectivity
+region.1.name = mushroom_body
+region.1.n_neurons = 21500
+region.1.density = 0.003
+region.1.nt = ACh
+region.1.types = KC:0.86 MBON_cholinergic:0.04 MBON_gabaergic:0.02 MBON_glutamatergic:0.01 DAN_PAM:0.04 DAN_PPL1:0.03
+region.1.nt_dist = ACh:0.65 GABA:0.15 Glut:0.05 DA:0.15
+
+# ============================================================
+#  Region 2: Lateral Horn (LH) — innate olfactory responses
+# ============================================================
+# Direct input from AL PNs, drives innate behaviors
+region.2.name = lateral_horn
+region.2.n_neurons = 1500
+region.2.density = 0.06
+region.2.nt = ACh
+region.2.types = PN:0.40 LN:0.30 FastSpiking:0.30
+region.2.nt_dist = ACh:0.50 GABA:0.45 Glut:0.05
+
+# ============================================================
+#  Region 3: Central Complex (CX) — navigation & motor planning
+# ============================================================
+# Ellipsoid body, fan-shaped body, protocerebral bridge, noduli
+# Ring neurons, compass neurons, columnar neurons
+region.3.name = central_complex
+region.3.n_neurons = 5000
+region.3.density = 0.02
+region.3.nt = ACh
+region.3.types = PN:0.25 KC:0.20 LN:0.25 FastSpiking:0.15 Bursting:0.15
+region.3.nt_dist = ACh:0.40 GABA:0.35 Glut:0.20 DA:0.05
+
+# ============================================================
+#  Region 4: Optic Lobe (OL) — visual processing
+# ============================================================
+# Lamina, medulla, lobula, lobula plate
+# Largest neuropil, columnar retinotopic organization
+# Very sparse long-range connectivity (columnar = local)
+region.4.name = optic_lobe
+region.4.n_neurons = 80000
+region.4.density = 0.0005
+region.4.nt = ACh
+region.4.types = PN:0.30 LN:0.25 FastSpiking:0.20 Bursting:0.10 KC:0.15
+region.4.nt_dist = ACh:0.50 GABA:0.30 Glut:0.15 5HT:0.05
+
+# ============================================================
+#  Region 5: Ventral Nerve Cord (VNC) — motor output
+# ============================================================
+# Motor neurons, premotor interneurons, sensory afferents
+region.5.name = ventral_nerve_cord
+region.5.n_neurons = 25000
+region.5.density = 0.001
+region.5.nt = ACh
+region.5.types = PN:0.35 FastSpiking:0.25 Bursting:0.20 LN:0.20
+region.5.nt_dist = ACh:0.40 GABA:0.25 Glut:0.30 OA:0.05
+
+# ============================================================
+#  Region 6: Subesophageal / Protocerebrum (misc)
+# ============================================================
+# Gustatory processing, descending neurons, misc interneurons
+region.6.name = protocerebrum
+region.6.n_neurons = 3655
+region.6.density = 0.01
+region.6.nt = ACh
+region.6.types = PN:0.35 LN:0.30 FastSpiking:0.20 Bursting:0.15
+region.6.nt_dist = ACh:0.45 GABA:0.30 Glut:0.15 5HT:0.05 OA:0.05
+
+# ============================================================
+#  Projections (inter-region wiring)
+# ============================================================
+
+# AL → MB: PN axons to Kenyon cell dendrites (calyx)
+# Sparse divergent: each PN contacts ~6% of KCs (Caron et al., 2013)
+projection.0.from = antennal_lobe
+projection.0.to = mushroom_body
+projection.0.density = 0.002
+projection.0.nt = ACh
+projection.0.weight_mean = 1.5
+projection.0.weight_std = 0.4
+
+# AL → LH: Direct PN pathway for innate responses
+projection.1.from = antennal_lobe
+projection.1.to = lateral_horn
+projection.1.density = 0.015
+projection.1.nt = ACh
+projection.1.weight_mean = 1.3
+projection.1.weight_std = 0.3
+
+# MB → LH: MBON output modulates innate behavior
+projection.2.from = mushroom_body
+projection.2.to = lateral_horn
+projection.2.density = 0.001
+projection.2.nt = ACh
+projection.2.weight_mean = 1.0
+projection.2.weight_std = 0.2
+
+# LH → CX: Innate olfactory drives navigation
+projection.3.from = lateral_horn
+projection.3.to = central_complex
+projection.3.density = 0.005
+projection.3.nt = ACh
+projection.3.weight_mean = 1.0
+projection.3.weight_std = 0.3
+
+# OL → CX: Visual input to central complex (landmark navigation)
+projection.4.from = optic_lobe
+projection.4.to = central_complex
+projection.4.density = 0.0003
+projection.4.nt = ACh
+projection.4.weight_mean = 1.2
+projection.4.weight_std = 0.3
+
+# CX → VNC: Descending motor commands
+projection.5.from = central_complex
+projection.5.to = ventral_nerve_cord
+projection.5.density = 0.002
+projection.5.nt = ACh
+projection.5.weight_mean = 1.5
+projection.5.weight_std = 0.4
+
+# MB → CX: Learned behavior influences motor planning
+projection.6.from = mushroom_body
+projection.6.to = central_complex
+projection.6.density = 0.0005
+projection.6.nt = ACh
+projection.6.weight_mean = 0.8
+projection.6.weight_std = 0.2
+
+# LH → VNC: Direct innate motor responses
+projection.7.from = lateral_horn
+projection.7.to = ventral_nerve_cord
+projection.7.density = 0.002
+projection.7.nt = ACh
+projection.7.weight_mean = 1.2
+projection.7.weight_std = 0.3
+
+# Protocerebrum → CX: Descending modulation
+projection.8.from = protocerebrum
+projection.8.to = central_complex
+projection.8.density = 0.003
+projection.8.nt = ACh
+projection.8.weight_mean = 1.0
+projection.8.weight_std = 0.3
+
+# Protocerebrum → VNC: Descending neurons
+projection.9.from = protocerebrum
+projection.9.to = ventral_nerve_cord
+projection.9.density = 0.002
+projection.9.nt = ACh
+projection.9.weight_mean = 1.3
+projection.9.weight_std = 0.4
+
+# VNC → Protocerebrum: Ascending sensory feedback
+projection.10.from = ventral_nerve_cord
+projection.10.to = protocerebrum
+projection.10.density = 0.0005
+projection.10.nt = ACh
+projection.10.weight_mean = 0.8
+projection.10.weight_std = 0.2
+
+# ============================================================
+#  Stimulus Protocol — olfactory conditioning paradigm
+# ============================================================
+
+# Baseline spontaneous activity (no external drive)
+# t=0-1000ms: warmup
+
+# Odor A presentation (CS+) — activates 30% of AL
+stimulus.0.label = odor_A
+stimulus.0.region = antennal_lobe
+stimulus.0.start = 1000
+stimulus.0.end = 2000
+stimulus.0.intensity = 10.0
+stimulus.0.fraction = 0.30
+
+# Reward signal (US) — DAN activation in MB, overlapping with odor
+stimulus.1.label = sugar_reward
+stimulus.1.region = mushroom_body
+stimulus.1.start = 1500
+stimulus.1.end = 1800
+stimulus.1.intensity = 8.0
+stimulus.1.fraction = 0.07
+
+# Inter-trial interval: t=2000-3000ms
+
+# Odor B presentation (CS-) — different glomeruli, no reward
+stimulus.2.label = odor_B
+stimulus.2.region = antennal_lobe
+stimulus.2.start = 3000
+stimulus.2.end = 4000
+stimulus.2.intensity = 10.0
+stimulus.2.fraction = 0.25
+
+# Visual looming stimulus (predator escape)
+stimulus.3.label = visual_loom
+stimulus.3.region = optic_lobe
+stimulus.3.start = 4500
+stimulus.3.end = 4700
+stimulus.3.intensity = 15.0
+stimulus.3.fraction = 0.10

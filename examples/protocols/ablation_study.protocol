@@ -1,0 +1,50 @@
+# Ablation study protocol
+# Tests the functional role of MBON neurons (indices 300-319) by:
+#   1. Recording baseline dynamics
+#   2. Silencing MBONs with hyperpolarizing current
+#   3. Observing altered downstream dynamics in shadow mode
+#   4. Releasing silencing and measuring recovery
+#
+# MBON neurons: 300-319 (cholinergic, gabaergic, glutamatergic subtypes)
+
+[protocol]
+name = MBON Ablation Study
+description = Baseline -> Ablate MBONs -> Observe changed dynamics -> Restore -> Recovery
+seed = 42
+
+[phase:pre_ablation_baseline]
+name = Pre-Ablation Baseline
+duration_ms = 5000
+bridge_mode = 0
+enable_stdp = false
+weight_scale = 1.0
+
+[phase:ablation_onset]
+name = Ablation Active
+duration_ms = 5000
+bridge_mode = 0
+enable_stdp = false
+weight_scale = 1.0
+stimulus = ablation_silence 0 5000 -1.0 300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319
+
+[phase:ablation_observation]
+name = Ablation Observation
+duration_ms = 10000
+bridge_mode = 1
+enable_stdp = false
+weight_scale = 1.0
+stimulus = ablation_silence 0 10000 -1.0 300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319
+
+[phase:restore]
+name = Restore (Silencing Released)
+duration_ms = 5000
+bridge_mode = 0
+enable_stdp = false
+weight_scale = 1.0
+
+[phase:recovery_observation]
+name = Recovery Observation
+duration_ms = 5000
+bridge_mode = 1
+enable_stdp = false
+weight_scale = 1.0

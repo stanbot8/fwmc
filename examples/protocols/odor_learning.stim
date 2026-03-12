@@ -1,0 +1,77 @@
+# Odor learning stimulus protocol for mushroom body validation
+#
+# Simulates a classical conditioning experiment:
+#   CS+ (odor A) = KC activation + DAN reward signal
+#   CS- (odor B) = KC activation only (no reward)
+#
+# Three training blocks followed by a test block.
+# Each block has 10 CS+ and 10 CS- trials in pseudorandom order.
+#
+# Format: start_ms duration_ms region current_pA label
+# Region indices match parametric_mushroom_body.brain output:
+#   0-1999: KCs, 2000-2029: MBONs, 2030-2049: DANs
+
+# === Training Block 1 (t=0-5000ms) ===
+# CS+ trials: activate ~200 KCs (odor A pattern) + DANs
+0       200     0-199     15.0    CS+_trial1_odor
+0       100     2030-2039 20.0    CS+_trial1_reward
+500     200     400-599   15.0    CS-_trial1_odor
+1000    200     0-199     15.0    CS+_trial2_odor
+1000    100     2030-2039 20.0    CS+_trial2_reward
+1500    200     400-599   15.0    CS-_trial2_odor
+2000    200     0-199     15.0    CS+_trial3_odor
+2000    100     2030-2039 20.0    CS+_trial3_reward
+2500    200     400-599   15.0    CS-_trial3_odor
+3000    200     0-199     15.0    CS+_trial4_odor
+3000    100     2030-2039 20.0    CS+_trial4_reward
+3500    200     400-599   15.0    CS-_trial4_odor
+4000    200     0-199     15.0    CS+_trial5_odor
+4000    100     2030-2039 20.0    CS+_trial5_reward
+4500    200     400-599   15.0    CS-_trial5_odor
+
+# === Training Block 2 (t=5000-10000ms) ===
+5000    200     0-199     15.0    CS+_trial6_odor
+5000    100     2030-2039 20.0    CS+_trial6_reward
+5500    200     400-599   15.0    CS-_trial6_odor
+6000    200     0-199     15.0    CS+_trial7_odor
+6000    100     2030-2039 20.0    CS+_trial7_reward
+6500    200     400-599   15.0    CS-_trial7_odor
+7000    200     0-199     15.0    CS+_trial8_odor
+7000    100     2030-2039 20.0    CS+_trial8_reward
+7500    200     400-599   15.0    CS-_trial8_odor
+8000    200     0-199     15.0    CS+_trial9_odor
+8000    100     2030-2039 20.0    CS+_trial9_reward
+8500    200     400-599   15.0    CS-_trial9_odor
+9000    200     0-199     15.0    CS+_trial10_odor
+9000    100     2030-2039 20.0    CS+_trial10_reward
+9500    200     400-599   15.0    CS-_trial10_odor
+
+# === Training Block 3 (t=10000-15000ms) ===
+10000   200     0-199     15.0    CS+_trial11_odor
+10000   100     2030-2039 20.0    CS+_trial11_reward
+10500   200     400-599   15.0    CS-_trial11_odor
+11000   200     0-199     15.0    CS+_trial12_odor
+11000   100     2030-2039 20.0    CS+_trial12_reward
+11500   200     400-599   15.0    CS-_trial12_odor
+12000   200     0-199     15.0    CS+_trial13_odor
+12000   100     2030-2039 20.0    CS+_trial13_reward
+12500   200     400-599   15.0    CS-_trial13_odor
+13000   200     0-199     15.0    CS+_trial14_odor
+13000   100     2030-2039 20.0    CS+_trial14_reward
+13500   200     400-599   15.0    CS-_trial14_odor
+14000   200     0-199     15.0    CS+_trial15_odor
+14000   100     2030-2039 20.0    CS+_trial15_reward
+14500   200     400-599   15.0    CS-_trial15_odor
+
+# === Test Block (t=20000-25000ms) ===
+# No reward signal, measure differential MBON response
+20000   200     0-199     15.0    test_CS+_1
+20500   200     400-599   15.0    test_CS-_1
+21000   200     0-199     15.0    test_CS+_2
+21500   200     400-599   15.0    test_CS-_2
+22000   200     0-199     15.0    test_CS+_3
+22500   200     400-599   15.0    test_CS-_3
+23000   200     0-199     15.0    test_CS+_4
+23500   200     400-599   15.0    test_CS-_4
+24000   200     0-199     15.0    test_CS+_5
+24500   200     400-599   15.0    test_CS-_5

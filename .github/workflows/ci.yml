@@ -1,0 +1,116 @@
+# FWMC CI/CD Pipeline
+#
+# Badge instructions:
+#   Markdown:  [![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml)
+#   HTML:      <img src="https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg" alt="CI">
+#   Replace <OWNER>/<REPO> with your GitHub repository path.
+
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu GCC 13
+            os: ubuntu-latest
+            compiler: gcc
+            cc: gcc-13
+            cxx: g++-13
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y gcc-13 g++-13
+          - name: Ubuntu Clang 18
+            os: ubuntu-latest
+            compiler: clang
+            cc: clang-18
+            cxx: clang++-18
+            install: |
+              sudo apt-get update
+              sudo apt-get install -y clang-18
+          - name: Windows MSVC
+            os: windows-latest
+            compiler: msvc
+            cc: cl
+            cxx: cl
+            install: ""
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install compiler
+        if: matrix.install != ''
+        shell: bash
+        run: ${{ matrix.install }}
+
+      - name: Cache CMake build directory
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ hashFiles('CMakeLists.txt', 'src/**', 'tests/**') }}
+          restore-keys: |
+            ${{ matrix.os }}-${{ matrix.compiler }}-
+
+      - name: CMake configure
+        shell: bash
+        run: |
+          if [ "${{ matrix.compiler }}" = "msvc" ]; then
+            cmake -B build -DCMAKE_BUILD_TYPE=Release
+          else
+            cmake -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+              -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          fi
+
+      - name: Build
+        shell: bash
+        run: cmake --build build --config Release --parallel
+
+      - name: Run tests
+        shell: bash
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
+      - name: Run benchmarks
+        shell: bash
+        continue-on-error: true
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./build/Release/fwmc-bench.exe || true
+          else
+            ./build/fwmc-bench || true
+          fi
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install Python dependencies
+        shell: bash
+        run: pip install numpy
+
+      - name: Generate test data
+        shell: bash
+        run: python3 scripts/import_connectome.py --test --test-size 50 --output data
+
+      - name: Smoke test
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            ./build/Release/fwmc.exe --data data --duration 100
+          else
+            ./build/fwmc --data data --duration 100
+          fi
